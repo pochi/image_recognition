@@ -1,3 +1,6 @@
+# coding: utf-8
+# PYTHONIOENCODING=utf-8 python ocr_sample.py
+
 import cv2
 import numpy as np
 import os
@@ -45,9 +48,24 @@ def pyocr_tool():
         exit
     return tools[0]
 
+def _inference(text):
+    conference = [(u"三" in text), (u"京" in text), (u"U" in text)]
+    if np.count_nonzero(conference) >= 2:
+        return "green"
+
+    if np.count_nonzero(conference) == 1:
+        return "yellow"
+    
+    return False
+
 if __name__ == '__main__':
     for file in os.listdir(DATA_DIR + "/original"):
+        answer = False
         current_dir = prepare_dir(file)
         resize_to_xx_times(file, current_dir)
         for text in extract_ocr(current_dir):
-            print text
+            answer = _inference(text)
+            if answer == "green":
+                break
+
+        print answer
