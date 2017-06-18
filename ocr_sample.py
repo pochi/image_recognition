@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import os
 import pyocr
+import re
 import pyocr.builders
 from PIL import Image
 from IPython import embed
@@ -12,9 +13,9 @@ from IPython.terminal.embed import InteractiveShellEmbed
 
 DATA_DIR = "./data"
 
-def prepare_dir(file):
-    basename, _ = os.path.splitext( os.path.basename(file) )
-    dir = DATA_DIR + "/" + basename
+def prepare_dir(root):
+    # FIXME: 'original' use as magic word, but if root dir include 'original', it will happen bug.
+    dir = root.replace("original", "custom")
     if not os.path.exists(dir):
         os.makedirs(dir)
     return dir
@@ -59,13 +60,13 @@ def _inference(text):
     return False
 
 if __name__ == '__main__':
-    for file in os.listdir(DATA_DIR + "/original"):
+    for root, dirs, files in os.walk(DATA_DIR + "/original"):
         answer = False
-        current_dir = prepare_dir(file)
-        resize_to_xx_times(file, current_dir)
-        for text in extract_ocr(current_dir):
-            answer = _inference(text)
-            if answer == "green":
-                break
+        current_dir = prepare_dir(root)
+        for file in files:
+            resize_to_xx_times(file, current_dir)
+            for text in extract_ocr(current_dir):
+                answer = _inference(text)
+                if answer == "green":
+                    break
 
-        print answer
