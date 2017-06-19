@@ -53,12 +53,12 @@ def pyocr_tool():
 def _inference(text):
     conference = [(u"三" in text), (u"京" in text), (u"U" in text)]
     if np.count_nonzero(conference) >= 2:
-        return "green"
+        return FOUND
 
     if np.count_nonzero(conference) == 1:
-        return "yellow"
+        return MAYBE
     
-    return None
+    return NOT_FOUND
 
 def _output(dir, file, text, answer):
     # WARNING: catch exception
@@ -66,25 +66,30 @@ def _output(dir, file, text, answer):
     with codecs.open(dir + "/" + output_file, "w", "utf-8") as f:
         f.write(answer + ", " + text)
 
+
+FOUND = "1"
+MAYBE = "2"
+NOT_FOUND = "3"
+        
 if __name__ == '__main__':
     for root, dirs, files in os.walk(DATA_DIR + "/original"):
         current_dir = prepare_dir(root)
         for file in files:
-            answer, text = None, None
+            answer, text = NOT_FOUND, None
             resize_to_xx_times(file, current_dir)
             for t in extract_ocr(current_dir):
                 current_answer = _inference(t)
-                if current_answer == "green":
+                if current_answer == FOUND:
                     text = t
-                    answer = "green"
+                    answer = FOUND
                     break
 
-                if current_answer == "yellow" and answer == None:
-                    answer = "yellow"
-                    text = t
+                if current_answer == MAYBE and answer == NOT_FOUND:
+                    text = t                    
+                    answer = MAYBE
                     continue
                 
-                if current_answer == None and answer == None:
+                if current_answer == NOT_FOUND and answer == NOT_FOUND:
                     text = t
                     continue
 
