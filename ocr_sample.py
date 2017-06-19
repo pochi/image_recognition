@@ -7,6 +7,7 @@ import os
 import pyocr
 import re
 import pyocr.builders
+import codecs
 from PIL import Image
 from IPython import embed
 from IPython.terminal.embed import InteractiveShellEmbed
@@ -57,16 +58,34 @@ def _inference(text):
     if np.count_nonzero(conference) == 1:
         return "yellow"
     
-    return False
+    return None
+
+def _output(dir, file, text, answer):
+    # WARNING: catch exception
+    output_file = file.split(".")[0] + ".csv"
+    with codecs.open(dir + "/" + output_file, "w", "utf-8") as f:
+        f.write(answer + ", " + text)
 
 if __name__ == '__main__':
     for root, dirs, files in os.walk(DATA_DIR + "/original"):
-        answer = False
         current_dir = prepare_dir(root)
         for file in files:
+            answer, text = None, None
             resize_to_xx_times(file, current_dir)
-            for text in extract_ocr(current_dir):
-                answer = _inference(text)
-                if answer == "green":
+            for t in extract_ocr(current_dir):
+                current_answer = _inference(t)
+                if current_answer == "green":
+                    text = t
+                    answer = "green"
                     break
 
+                if current_answer == "yellow" and answer == None:
+                    answer = "yellow"
+                    text = t
+                    continue
+                
+                if current_answer == None and answer == None:
+                    text = t
+                    continue
+
+            _output(current_dir, file, text, answer)
